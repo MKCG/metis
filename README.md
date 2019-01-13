@@ -225,6 +225,7 @@ A new version is expected every two weeks on saturday night.
 
 
 | Feature                    | Expected for |  Version  |
+|----------------------------|--------------|-----------|
 | Fuzzy search               | 2018-01-20   |  0.3      |
 | Document Update / Delete   | 2018-01-27   |  0.4      |
 | Index storage              | 2018-01-27   |  0.5      |

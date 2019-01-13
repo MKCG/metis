@@ -94,6 +94,7 @@
                         'content.company.product.name': ['Table', 'Cheese', 'Bike']
                     };
 
+                    selectedFacets = {};
                     return this.searchByPrefix(query, limit, selectedFacets);
                 }.bind(searchEngine))
                 .then(function(observer, results) {

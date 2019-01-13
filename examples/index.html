@@ -30,9 +30,16 @@
         <div class="row content">
 
             <div class="col s12 m4 l3 xl2">
-                <ul class="right-align">
-                    <li id="resultCount"></li>
-                </ul>
+                <div class="row">
+                    <div class="col s12">
+                        <span id="resultCount"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div id="facets" class="col s12">
+                    </div>
+                </div>
             </div>
 
             <div class="col s12 m8 l9 xl10">
@@ -52,8 +59,30 @@
                 count = document.getElementById('resultCount'),
                 searchBar = document.getElementById('searchBar'),
                 suggestions = document.getElementById('suggestions'),
-                results = document.getElementById('results');
+                results = document.getElementById('results'),
+                facetContainer = document.getElementById('facets'),
+                selectedFacets = Object.create(null);
 
+            let searchModel = {
+                searchEngine: searchEngine,
+                query: '',
+                limit: 50,
+                selectedFacets: selectedFacets,
+                sort(first, second) {
+                    let firstLastname = first.getNestedValue('content.lastname'),
+                        secondLastname = second.getNestedValue('content.lastname');
+
+                    if (firstLastname !== secondLastname) {
+                        return firstLastname > secondLastname
+                            ? 1
+                            : -1;
+                    }
+
+                    return first.getNestedValue('content.firstname') > second.getNestedValue('content.firstname')
+                        ? 1
+                        : -1;
+                }
+            };
 
             let observer = {
                 listeners: [],
@@ -89,17 +118,22 @@
 
             observer
                 .when('search', function(observer, query, limit) {
-                    let selectedFacets = {
-                        'content.company.product.color': ['azure', 'gold', 'indigo', 'green', 'grey', 'orange'],
-                        'content.company.product.name': ['Table', 'Cheese', 'Bike']
-                    };
+                    this.query = query;
+                    this.limit = limit;
 
-                    selectedFacets = {};
-                    return this.searchByPrefix(query, limit, selectedFacets);
-                }.bind(searchEngine))
+                    let results = this.searchEngine.searchByPrefix(this.query, this.limit, this.selectedFacets, this.sort);
+                    observer.trigger('searchResults', results);
+                }.bind(searchModel));
+
+            observer
+                .when('searchResults', function(observer, results) {
+                    return results;
+                }.bind(searchModel))
+
                 .then(function(observer, results) {
                     this.innerHTML = results.count + ' documents found in ' + Math.ceil(results.took) + 'ms';
                 }.bind(count))
+
                 .then(function(observer, results) {
                     let cards = [];
 
@@ -119,9 +153,55 @@
 
                         cards.push(card);
                     }
-
+ 
                     observer.trigger('cardRendered', cards);
-                });
+                })
+
+                .then(function(observer, results) {
+                    let elements = '';
+
+                    for (let facet in results.facets) {
+                        if (Object.keys(results.facets[facet]).length === 0) {
+                            continue;
+                        }
+
+                        let options = [];
+
+                        options.push(
+                            '<li id="facet-' + facet + '" class="collection-header">' +
+                                facet.toUpperCase().split(".").slice(1).join(" ") +
+                            '</li>'
+                        );
+
+                        for (let choice in results.facets[facet]) {
+                            let selected = results.selectedFacets[facet] !== undefined && results.selectedFacets[facet].indexOf(choice) !== -1;
+
+                            let option =
+                                '<li>' +
+                                    '<label>' +
+                                        '<input type="checkbox" data-facet="'+ facet + '" value="' + choice + '" class="filled-in"' + (selected ? ' checked="checked"' : '' ) + '/>' +
+                                        '<span>' +
+                                            choice +
+                                            '<span class="badge right">' + results.facets[facet][choice] + '</span>' +
+                                        '</span>' +
+                                    '</label>' +
+                                '</li>'
+                            ;
+
+                            options.push(option);
+                        }
+
+                        elements +=
+                            '<div class="row">' +
+                                '<div class="col s12">' +
+                                    '<ul class="collection with-header facet">' + options.join('') + '</ul>' +
+                                '</div>' +
+                            '</div>'
+                        ;
+                    }
+
+                    this.innerHTML = elements;
+                }.bind(facetContainer));
 
             observer
                 .when('cardRendered', function(observer, cards) {
@@ -155,8 +235,41 @@
                     this.innerHTML = options;
                 }.bind(suggestions));
 
+            observer
+                .when('selectFacet', function(observer, facet, choice, selected) {
+                    if (this.selectedFacets[facet] === undefined) {
+                        this.selectedFacets[facet] = [];
+                    }
+
+                    if (selected) {
+                        this.selectedFacets[facet].push(choice);
+                    } else {
+                        let index = this.selectedFacets[facet].indexOf(choice);
+
+                        if (index !== -1) {
+                            this.selectedFacets[facet].splice(index, 1);
+
+                            if (this.selectedFacets[facet].length === 0) {
+                                delete this.selectedFacets[facet];
+                            }
+                        }
+                    }
+
+                    let results = this.searchEngine.searchByPrefix(this.query, this.limit, this.selectedFacets, this.sort);
+
+                    observer.trigger('searchResults', results);
+                }.bind(searchModel));
 
 
+            facetContainer.addEventListener('click', function(event) {
+                if (event.target.type === 'checkbox') {
+                    let facet = event.target.getAttribute('data-facet'),
+                        value = event.target.value,
+                        selected = event.target.checked;
+
+                    this.trigger('selectFacet', facet, value, selected);
+                }
+            }.bind(observer));
 
             searchBar.addEventListener('keyup', function(event) {
                 this.trigger('search', event.target.value, 50);
@@ -175,7 +288,7 @@
             }.bind(observer));
 
 
-            [...Array(500).keys()].forEach(function(id) {
+            [...Array(1000).keys()].forEach(function(id) {
                 const fields = [
                     'content.firstname',
                     'content.lastname',

@@ -71,11 +71,7 @@ Expected locales support :
 
 ### Aggregations
 
-At the moment, only facets aggregations are expected to be supported.
-
-#### Facets
-
-Work in progress.
+At the moment, only facets aggregations are supported.
 
 
 #### Highlight
@@ -229,12 +225,11 @@ A new version is expected every two weeks on saturday night.
 
 
 | Feature                    | Expected for |  Version  |
-| Facet manager              | 2018-01-20   |  0.2      |
 | Fuzzy search               | 2018-01-20   |  0.3      |
 | Document Update / Delete   | 2018-01-27   |  0.4      |
-| Sorting                    | 2018-01-27   |  0.5      |
-| Index storage              | 2018-02-03   |  0.6      |
-| Web Workers                | 2018-02-03   |  0.7      |
+| Index storage              | 2018-01-27   |  0.5      |
+| Web Workers                | 2018-02-03   |  0.6      |
+| Advanced Sorting           | 2018-02-03   |  0.7      |
 | Locales based tokenization | 2018-02-17   |  0.8      |
 | Highlight                  | 2018-03-03   |  0.9      |
 | Better suggest             | 2018-03-18*  |  1.0      |
@@ -242,6 +237,10 @@ A new version is expected every two weeks on saturday night.
 
 * Don't expect me to work on St Patrick's day. Just don't.
 
+
+## Examples
+
+The file *examples/index.html* contains a fully functional example of a fulltext prefixed-based search bar with suggestions, facets and counters.
 
 
 ## Contributing

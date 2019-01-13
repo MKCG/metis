@@ -25,3 +25,11 @@
 .searchResults {
     padding-top: 1.5em;
 }
+
+.facet {
+    border: none;
+}
+
+.facet > .collection-header {
+    border: none !important;
+}

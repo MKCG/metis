@@ -1,0 +1,27 @@
+ @media only screen and (min-width: 993px) {
+    .row {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .row > .col {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .col > .card {
+        height: 100%;
+    }
+}
+
+.card:hover {
+    background-color: #78909c !important; /* blue-grey lighten-1 */
+}
+
+.content {
+    padding-top: 1.5em;
+}
+
+.searchResults {
+    padding-top: 1.5em;
+}

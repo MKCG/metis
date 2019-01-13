@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Little Resume brewed with love</title>
+
+    <!-- External lib for test purposes-->
+    <script type="text/javascript" src="https://rawgit.com/Marak/faker.js/master/examples/browser/js/faker.js"></script>
+
+    <!-- Search engine -->
+    <script type="text/javascript" src="../src/Utils.js"></script>
+    <script type="text/javascript" src="../src/RadixTree.js"></script>
+    <script type="text/javascript" src="../src/InvertedIndex.js"></script>
+    <script type="text/javascript" src="../src/SearchEngine.js"></script>
+    <script type="text/javascript" src="../src/SearchEngineBuilder.js"></script>
+    <script type="text/javascript" src="../src/FacetManager.js"></script>
+
+    <!-- Design -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link rel="stylesheet" href="main.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <style type="text/css">
+        input::-webkit-calendar-picker-indicator {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="row content">
+
+            <div class="col s12 m4 l3 xl2">
+                <ul class="right-align">
+                    <li id="resultCount"></li>
+                </ul>
+            </div>
+
+            <div class="col s12 m8 l9 xl10">
+                <input type="text" name="searchBar" id="searchBar" list="suggestions" placeholder="Rechercher...">
+                <datalist id="suggestions">
+                </datalist>
+
+                <div id="results" class="searchResults"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <script type="text/javascript">
+        (function() {
+            const searchEngine = SearchEngineBuilder.create(50, true),
+                count = document.getElementById('resultCount'),
+                searchBar = document.getElementById('searchBar'),
+                suggestions = document.getElementById('suggestions'),
+                results = document.getElementById('results');
+
+
+            let observer = {
+                listeners: [],
+                map: [],
+                current: undefined,
+
+                when(name, callback) {
+                    this.current = name;
+                    this.listeners[name] = callback;
+
+                    if (this.map[name] === undefined) {
+                        this.map[name] = [];
+                    }
+
+                    return this;
+                },
+
+                then(callback) {
+                    this.map[this.current].push(callback);
+                    return this;
+                },
+
+                trigger(name, ...params) {
+                    if (!!this.listeners[name]) {
+                        let results = this.listeners[name](this, ...params);
+
+                        for (let callback of this.map[name]) {
+                            callback(this, results);
+                        }
+                    }
+                }
+            };
+
+            observer
+                .when('search', function(observer, query, limit) {
+                    let selectedFacets = {
+                        'content.company.product.color': ['azure', 'gold', 'indigo', 'green', 'grey', 'orange'],
+                        'content.company.product.name': ['Table', 'Cheese', 'Bike']
+                    };
+
+                    return this.searchByPrefix(query, limit, selectedFacets);
+                }.bind(searchEngine))
+                .then(function(observer, results) {
+                    this.innerHTML = results.count + ' documents found in ' + Math.ceil(results.took) + 'ms';
+                }.bind(count))
+                .then(function(observer, results) {
+                    let cards = [];
+
+                    for (let doc of results.documents) {
+                        let card =
+                            '<div id="doc-' + doc.id + '" class="col s12 m12 l6">' +
+                                '<div class="card grey z-depth-2">' +
+                                    '<div class="card-content white-text">' +
+                                        '<span class="card-title">' + doc.content.lastname + ' ' + doc.content.firstname + '</span>' + doc.content.contact.email +
+                                        '<br />' + doc.content.jobTitle + ' at ' + doc.content.company.name +
+                                        '<br />' +
+                                        '<br />' +
+                                        '<br />' + doc.content.presentation +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>';
+
+                        cards.push(card);
+                    }
+
+                    observer.trigger('cardRendered', cards);
+                });
+
+            observer
+                .when('cardRendered', function(observer, cards) {
+                    let listContent = '<div class="row">';
+
+                    for (let i = 0, len = cards.length; i < len; i ++) {
+                        if (i > 0 && i % 2 === 0) {
+                            listContent += '</div><div class="row">';
+                        }
+
+                        listContent += cards[i];
+                    }
+
+                    listContent += '</div>';
+
+                    this.innerHTML = listContent;
+                }.bind(results));
+
+
+            observer
+                .when('suggest', function(observer, query, limit) {
+                    return this.suggest(query, limit);
+                }.bind(searchEngine))
+                .then(function(observer, results) {
+                    let template = '<option>{{ suggestion }}</option>';
+
+                    let options = results.map(function(suggestion) {
+                        return this.replace('{{ suggestion }}', suggestion);
+                    }.bind(template)).join('');
+
+                    this.innerHTML = options;
+                }.bind(suggestions));
+
+
+
+
+            searchBar.addEventListener('keyup', function(event) {
+                this.trigger('search', event.target.value, 50);
+
+                if (event.key !== undefined) {
+                    this.trigger('suggest', event.target.value, 5);
+                }
+            }.bind(observer));
+
+
+            searchBar.addEventListener('keydown', function(event) {
+                if (event.key === 'Backspace' && event.target.value.slice(-1).trim() !== '') {
+                    this.trigger('search', event.target.value, 50);
+                    this.trigger('suggest', event.target.value, 5);
+                }
+            }.bind(observer));
+
+
+            [...Array(500).keys()].forEach(function(id) {
+                const fields = [
+                    'content.firstname',
+                    'content.lastname',
+                    'content.jobTitle',
+                    'content.presentation',
+                    'content.resume',
+                    'content.contact.email',
+                    'content.company.name'
+                ];
+
+                const facets = [
+                    'content.company.product.name',
+                    'content.company.product.material',
+                    'content.company.product.adjective',
+                    'content.company.product.color'
+                ];
+
+                let doc = {
+                    'id': id,
+                    'content': {
+                        'firstname': faker.name.firstName(),
+                        'lastname': faker.name.lastName(),
+                        'jobTitle': faker.name.jobTitle(),
+                        'presentation': [...Array(10).keys()].map((v) => faker.lorem.sentences()).join(' '),
+                        'resume': faker.lorem.paragraphs(),
+                        'contact': {
+                            'email': faker.internet.email()
+                        },
+                        'company': {
+                            'name': faker.company.companyName(),
+                            'product': {
+                                'name': faker.commerce.product(),
+                                'material': faker.commerce.productMaterial(),
+                                'adjective': faker.commerce.productAdjective(),
+                                'color': faker.commerce.color()
+                            }
+                        }
+                    }
+                };
+
+                this.indexDocument(id, doc, fields, facets);
+            }.bind(searchEngine));
+
+            observer.trigger('search', '', 50);
+            window.searchEngine = searchEngine;
+        })();
+    </script>
+</body>
+</html>

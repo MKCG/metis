@@ -339,6 +339,11 @@
                 this.indexDocument(id, doc, fields, facets);
             }.bind(searchEngine));
 
+            searchEngine.sort(searchModel.sort);
+
+            // Prevent from sorting each result
+            delete searchModel.sort;
+
             observer.trigger('search', '', 50);
             window.searchEngine = searchEngine;
         })();

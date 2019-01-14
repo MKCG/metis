@@ -4,7 +4,8 @@ class SearchEngine
         this.index = index;
         this.facetManager = facetManager;
         this.documents = [];
-        this.sortedKeywords
+        this.sortedIds = [];
+        this.mustSort = false;
     }
 
     indexDocument(id, doc, fields, facets) {
@@ -18,6 +19,20 @@ class SearchEngine
 
         this.facetManager.add(id, doc, facets);
         this.documents[id] = doc;
+        this.mustSort = true;
+    }
+
+    sort(sortCallback) {
+        this.sortedIds = Object.keys(this.documents).map(v => parseInt(v));
+
+        this.sortedIds.sort(function(first, second) {
+            return this.sort(this.documents[first], this.documents[second]);
+        }.bind({
+            sort: sortCallback,
+            documents: this.documents
+        }));
+
+        this.mustSort = false;
     }
 
     doSearch(searchCallback, query, limit, selectedFacets, sortCallback) {
@@ -38,6 +53,8 @@ class SearchEngine
                 sort: sortCallback,
                 documents: this.documents
             }));
+        } else if (this.sortedIds.length === this.documents.length && this.mustSort === false) {
+            ids = ids.intersect(this.sortedIds);
         }
 
         let timerSort = performance.now();

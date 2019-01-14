@@ -48,8 +48,6 @@ class RadixTree
             for (let token of this.tokens) {
                 if (token.length >= value.length && token.indexOf(value) === 0) {
                     matches.add(token);
-                } else if (value.length > token.length && value.indexOf(token) === 0) {
-                    matches.add(token);
                 }
             }
         }

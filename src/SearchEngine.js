@@ -20,19 +20,27 @@ class SearchEngine
         this.documents[id] = doc;
     }
 
-    searchByPrefix(query, limit, selectedFacets, sortCallback) {
+    doSearch(searchCallback, query, limit, selectedFacets, sortCallback) {
         let searchStart = performance.now();
 
-        let foundIds = this.index.searchByPrefix(query);
+        let foundIds = searchCallback(query);
+        let timerQuery = performance.now();
+
         let facetedIds = this.facetManager.search(selectedFacets, foundIds);
+        let timerFacets = performance.now();
+
         let ids = [...facetedIds.ids];
 
-        ids.sort(function(first, second) {
-            return this.sort(this.documents[first], this.documents[second]);
-        }.bind({
-            sort: sortCallback,
-            documents: this.documents
-        }));
+        if (sortCallback !== undefined) {
+            ids.sort(function(first, second) {
+                return this.sort(this.documents[first], this.documents[second]);
+            }.bind({
+                sort: sortCallback,
+                documents: this.documents
+            }));
+        }
+
+        let timerSort = performance.now();
 
         let count = ids.length,
             documents = ids.slice(0, limit)
@@ -49,8 +57,30 @@ class SearchEngine
             'documents': documents,
             'facets': facetedIds.facets,
             'selectedFacets': selectedFacets,
-            'took': searchTime
+            'took': searchTime,
+            'timers': {
+                'query': timerQuery - searchStart,
+                'facets': timerFacets - timerQuery,
+                'sort': timerSort - timerFacets,
+                'documents': performance.now() - timerSort,
+            }
         };
+    }
+
+    fuzzySearch(query, limit, selectedFacets, sortCallback) {
+        let searchCallback = function(query) {
+            return this.fuzzy(query);
+        }.bind(this.index);
+
+        return this.doSearch(searchCallback, query, limit, selectedFacets, sortCallback);
+    }
+
+    searchByPrefix(query, limit, selectedFacets, sortCallback) {
+        let searchCallback = function(query) {
+            return this.searchByPrefix(query);
+        }.bind(this.index);
+
+        return this.doSearch(searchCallback, query, limit, selectedFacets, sortCallback);
     }
 
     suggest(query, limit) {

@@ -131,7 +131,12 @@
                 }.bind(searchModel))
 
                 .then(function(observer, results) {
-                    this.innerHTML = results.count + ' documents found in ' + Math.ceil(results.took) + 'ms';
+                    this.innerHTML = results.count + ' documents found in ' + Math.ceil(results.took) + 'ms' +
+                        '<br/> Query : ' + Math.round(results.timers.query * 10) / 10 + 'ms' +
+                        '<br/> Facets : ' + Math.round(results.timers.facets * 10) / 10 + 'ms' +
+                        '<br/> Sort : ' + Math.round(results.timers.sort * 10) / 10 + 'ms' +
+                        '<br/> Documents : ' + Math.round(results.timers.documents * 10) / 10 + 'ms'
+                        ;
                 }.bind(count))
 
                 .then(function(observer, results) {
@@ -300,6 +305,7 @@
                 ];
 
                 const facets = [
+                    'content.company.jobArea',
                     'content.company.product.name',
                     'content.company.product.material',
                     'content.company.product.adjective',
@@ -319,6 +325,7 @@
                         },
                         'company': {
                             'name': faker.company.companyName(),
+                            'jobArea': faker.name.jobArea(),
                             'product': {
                                 'name': faker.commerce.product(),
                                 'material': faker.commerce.productMaterial(),

@@ -1,7 +1,7 @@
 class InvertedIndex
 {
     constructor(cacheSize) {
-        this.tokens = {};
+        this.tokens = Object.create(null);
         this.trackedIds = new Set();
         this.lastQueries = [];
         this.radixTree = new RadixTree(3, 1);
@@ -17,7 +17,7 @@ class InvertedIndex
         let tokens = this.tokenize(value);
 
         for (let token of tokens) {
-            if (this.tokens.hasOwnProperty(token) === false) {
+            if (this.tokens[token] === undefined) {
                 this.tokens[token] = new Set();
             }
 
@@ -58,7 +58,8 @@ class InvertedIndex
 
     suggest(value, nb) {
         let tokens = value.normalize('NFD')
-            .replace(/[\u0300-\u036f,!?;:@&#"'\.]/g, "")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-zA-Z 0-9]+/g," ")
             .split(' ')
             .filter((v) => v !== '')
             .map((value) => value.toLowerCase());
@@ -108,8 +109,6 @@ class InvertedIndex
     }
 
     fuzzy(value) {
-        let start = performance.now();
-
         let tokens = this.tokenize(value),
             fuzzyIds;
 
@@ -123,7 +122,7 @@ class InvertedIndex
             let fuzzy = [...ngrams].map(function(ngram) {
                     return this[ngram] || new Set();
                 }.bind(this.ngrams))
-                .reduce((a,v) => a.union(v));
+                .reduce((a,v) => a.union(v), new Set());
 
             fuzzy = [...fuzzy].filter(function(token) {
                     if (this.length < 4) {              // no typo err for short tokens
@@ -150,11 +149,7 @@ class InvertedIndex
             }
         }
 
-        let end = performance.now()
-
-        console.log(end - start);
-
-        return [...fuzzyIds];
+        return fuzzyIds;
     }
 
     searchByPrefix(value) {
@@ -170,7 +165,8 @@ class InvertedIndex
 
         let ids = [];
         let tokens = value.normalize('NFD')
-            .replace(/[\u0300-\u036f,!?;:@&#"']/g, "")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-zA-Z 0-9]+/g," ")
             .split(' ')
             .filter((v) => v !== '')
             .map((value) => value.toLowerCase());
@@ -229,7 +225,7 @@ class InvertedIndex
         }.bind(this.tokens));
 
         for (let token of tokens) {
-            if (this.tokens.hasOwnProperty(token) === false) {
+            if (this.tokens[token] === undefined) {
                 return [];
             }
 
@@ -249,7 +245,7 @@ class InvertedIndex
         let matched = new Set();
 
         for (let token of tokens) {
-            if (this.tokens.hasOwnProperty(token) === false) {
+            if (this.tokens[token] === undefined) {
                 return [];
             }
 
@@ -267,7 +263,8 @@ class InvertedIndex
 
     tokenize(value) {
         return value.normalize('NFD')
-            .replace(/[\u0300-\u036f,!?;:@&#"'\.]/g, "")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-zA-Z 0-9]+/g," ")
             .split(' ')
             .filter(function(value, index, array) {
                 return value !== '' && array.indexOf(value) === index;

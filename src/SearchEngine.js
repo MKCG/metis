@@ -54,7 +54,9 @@ class SearchEngine
                 documents: this.documents
             }));
         } else if (this.sortedIds.length === this.documents.length && this.mustSort === false) {
-            ids = ids.intersect(this.sortedIds);
+            ids = this.sortedIds.filter(function(id) {
+                return this.has(id);
+            }, new Set(ids));
         }
 
         let timerSort = performance.now();

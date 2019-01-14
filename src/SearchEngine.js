@@ -22,6 +22,24 @@ class SearchEngine
         this.mustSort = true;
     }
 
+    removeDocument(id) {
+        this.index.remove(id);
+        delete this.documents[id];
+
+        let pos = this.sortedIds.indexOf(id);
+
+        if (pos !== -1) {
+            this.sortedIds.splice(pos, 1);
+        }
+
+        this.facetManager.remove(id);
+    }
+
+    updateDocument(id, doc, fields, facets) {
+        this.removeDocument(id);
+        this.indexDocument(id, doc, fields, facets);
+    }
+
     sort(sortCallback) {
         this.sortedIds = Object.keys(this.documents).map(v => parseInt(v));
 

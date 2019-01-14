@@ -49,10 +49,11 @@ class InvertedIndex
 
             if (this.tokens[tokens[i]].size === 0) {
                 delete this.tokens[tokens[i]];
+                this.radixTree.remove(tokens[i]);
             }
         }
 
-        this.trackedIds.remove(id);
+        this.trackedIds.delete(id);
         this.lastQueries = [];
     }
 

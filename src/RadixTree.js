@@ -28,6 +28,19 @@ class RadixTree
         }
     }
 
+    remove(value) {
+        if (this.size === 0 || value.length <= this.step) {
+            this.tokens.delete(value);
+        } else {
+            let prefix = value.slice(0, this.step),
+                suffix = value.slice(this.step);
+
+            if (this.inner[prefix] !== undefined) {
+                this.inner[prefix].remove(suffix);
+            }
+        }
+    }
+
     match(value, nb) {
         let matches = new Set();
 

@@ -24,6 +24,22 @@ class FacetManager
         }
     }
 
+    remove(id) {
+        for (let facet in this.facets) {
+            for (let choice in this.facets[facet]) {
+                this.facets[facet][choice].delete(id);
+
+                if (this.facets[facet][choice].size === 0) {
+                    delete this.facets[facet][choice];
+                }
+            }
+
+            if (Object.keys(this.facets[facet]) === 0) {
+                delete this.facets[facet];
+            }
+        }
+    }
+
     getFacets() {
         let refinedFacets = this.refineFacets(this.facets);
 

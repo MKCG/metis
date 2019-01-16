@@ -66,7 +66,7 @@
             let searchModel = {
                 searchEngine: searchEngine,
                 query: '',
-                limit: 50,
+                limit: 20,
                 selectedFacets: selectedFacets,
                 sort(first, second) {
                     let firstLastname = first.getNestedValue('content.lastname'),
@@ -117,9 +117,8 @@
             };
 
             observer
-                .when('search', function(observer, query, limit) {
+                .when('search', function(observer, query) {
                     this.query = query;
-                    this.limit = limit;
 
                     let results = this.searchEngine.searchByPrefix(this.query, this.limit, this.selectedFacets, this.sort);
                     observer.trigger('searchResults', results);
@@ -277,7 +276,7 @@
             }.bind(observer));
 
             searchBar.addEventListener('keyup', function(event) {
-                this.trigger('search', event.target.value, 50);
+                this.trigger('search', event.target.value);
 
                 if (event.key !== undefined) {
                     this.trigger('suggest', event.target.value, 5);
@@ -309,7 +308,8 @@
                     'content.company.product.name',
                     'content.company.product.material',
                     'content.company.product.adjective',
-                    'content.company.product.color'
+                    'content.company.product.color',
+                    'content.company.product.note'
                 ];
 
                 let doc = {
@@ -330,7 +330,8 @@
                                 'name': faker.commerce.product(),
                                 'material': faker.commerce.productMaterial(),
                                 'adjective': faker.commerce.productAdjective(),
-                                'color': faker.commerce.color()
+                                'color': faker.commerce.color(),
+                                'note': Math.round(Number.parseFloat(faker.commerce.price()) / 110) + 1
                             }
                         }
                     }
@@ -344,7 +345,7 @@
             // Prevent from sorting each result
             delete searchModel.sort;
 
-            observer.trigger('search', '', 50);
+            observer.trigger('search', '');
             window.searchEngine = searchEngine;
         })();
     </script>

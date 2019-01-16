@@ -43,7 +43,7 @@ At the moment, suggested values are not necessarily part of the documents matchi
 
 ### Sorting algorithm
 
-Not implemented yet.
+Work in progress.
 
 
 Contrary to other search engines, tokens frequencies are not stored to limit the overall memory usage.  
@@ -54,6 +54,10 @@ Instead of a traditional TF-IDF or Okapi BM25 implementation, the sorting formul
 * custom-attribute matching
 * sorting callbacks
 
+#### Callbacks
+
+Callbacks can be used to sort search results during either the search phase or between searches.  
+It is recommended to prefer the later for a better user experience.
 
 
 #### Locale support

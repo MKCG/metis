@@ -1,0 +1,11 @@
+{
+  "name": "metis",
+  "description": "In-memory Javascript search engine",
+  "version": "0.3.0",
+  "licence": "GPL-3.0",
+  "keywords": [
+    "search engine",
+    "fulltext search",
+    "facet"
+  ]
+}

@@ -70,16 +70,19 @@ class InvertedIndex
         }
 
         let lastToken = tokens.pop(),
-            phrase = value.split(' ').filter((v) => v !== ''),
-            lastWord = phrase.pop();
+            phrase = value.split(' ')
+                .filter(v => v !== '');
 
+        phrase.pop();
         phrase = phrase.join(' ');
 
-        let suggestions = this.radixTree.match(lastToken, nb).map(function(suggestion) {
-            return phrase !== ''
-                ? phrase + ' ' + suggestion
-                : suggestion;
-        }.bind(phrase));
+        if (phrase !== '') {
+            phrase += ' ';
+        }
+
+        let suggestions = this.radixTree
+            .match(lastToken, nb)
+            .map(s => phrase + s);
 
         return suggestions;
     }

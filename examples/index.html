@@ -19,9 +19,17 @@
     <link rel="stylesheet" href="main.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
+    <!-- Charts used for aggregation -->
+    <script type="text/javascript" src="https://canvasjs.com/assets/script/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="https://canvasjs.com/assets/script/jquery.canvasjs.min.js"></script>
+
     <style type="text/css">
         input::-webkit-calendar-picker-indicator {
             display: none;
+        }
+
+        .chart {
+            height: 300px;
         }
     </style>
 </head>
@@ -46,6 +54,20 @@
                 <input type="text" name="searchBar" id="searchBar" list="suggestions" placeholder="Rechercher...">
                 <datalist id="suggestions">
                 </datalist>
+
+
+                <div class="row">
+                    <div class="col s12">
+                        <div class="row">
+                            <div class="col s12 m12 l6">
+                                <div id="jobAreaChart" class="chart"></div>
+                            </div>
+                            <div class="col s12 m12 l6">
+                                <div id="productColorChart" class="chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div id="results" class="searchResults"></div>
             </div>
@@ -205,7 +227,71 @@
                     }
 
                     this.innerHTML = elements;
-                }.bind(facetContainer));
+                }.bind(facetContainer))
+
+                .then(function(context, observer) {
+                    let jobAreaAgg = this.facetManager.aggregateByTerm('content.company.jobArea', this.lastIds, 10);
+
+                    var options = {
+                        data: [{
+                                type: "pie",
+                                startAngle: 45,
+                                showInLegend: "true",
+                                legendText: "{label}",
+                                indexLabel: "{label} ({y})",
+                                yValueFormatString:"#,##0.#"%"",
+                                dataPoints: jobAreaAgg.map(function(result) {
+                                    return {
+                                        label: result[0],
+                                        y: result[1]
+                                    };
+                                })
+                        }]
+                    };
+
+                    $("#jobAreaChart").CanvasJSChart(options);
+                }.bind(searchEngine))
+
+                .then(function(observer) {
+                    let productColorAgg = this.facetManager.aggregateByTerm('content.company.product.color', this.lastIds, 10);
+
+                    var options = {
+                        animationEnabled: false,
+                        axisY: {
+                            tickThickness: 0,
+                            lineThickness: 0,
+                            valueFormatString: " ",
+                            gridThickness: 0
+                        },
+                        axisX: {
+                            tickThickness: 0,
+                            lineThickness: 0,
+                            labelFontSize: 12,
+                            labelFontColor: "Peru"
+                        },
+                        data: [{
+                            indexLabelFontSize: 12,
+                            toolTipContent: "<span style=\"color:#62C9C3\">{indexLabel}:</span> <span style=\"color:#CD853F\"><strong>{y}</strong></span>",
+                            indexLabelPlacement: "inside",
+                            indexLabelFontColor: "white",
+                            indexLabelFontWeight: 600,
+                            indexLabelFontFamily: "Verdana",
+                            color: "#62C9C3",
+                            type: "bar",
+                            dataPoints: productColorAgg.map(function(result) {
+                                return {
+                                    indexLabel: result[0],
+                                    label: result[0],
+                                    y: result[1]
+                                };
+                            })
+                        }]
+                    };
+
+                    $("#productColorChart").CanvasJSChart(options);
+
+                }.bind(searchEngine))
+            ;
 
             observer
                 .when('cardRendered', function(observer, cards) {

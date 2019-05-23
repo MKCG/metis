@@ -79,6 +79,8 @@ class SearchEngine
 
         let timerSort = performance.now();
 
+        this.lastIds = ids;
+
         let count = ids.length,
             documents = ids.slice(0, limit)
             .map(function(id) {

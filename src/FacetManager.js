@@ -146,4 +146,55 @@ class FacetManager
             'facets': filteredFacets
         };
     }
+
+    aggregateByTerm(name, ids, limit) {
+        let aggregation = this.facets[name] || {};
+
+        if (Array.isArray(ids)) {
+            aggregation = Object.keys(aggregation)
+                .reduce(function(ids, acc, field) {
+                    acc[field] = this[field].intersect(ids);
+                    return acc;
+                }.bind(aggregation, ids), {});
+
+            Object.keys(aggregation)
+                .forEach(function(field) {
+                    if (this[field].size === 0) {
+                        delete this[field];
+                    }
+                }.bind(aggregation));
+        }
+
+        return this.renderAggregation(aggregation, this.sortByValueDesc, limit);
+    }
+
+    renderAggregation(aggregation, sorter, limit) {
+        let bucket = Object.keys(aggregation)
+            .reduce(function(acc, field) {
+                acc.push([field, this[field].size]);
+                return acc;
+            }.bind(aggregation), [])
+            .sort(sorter);
+
+        return limit > 0
+            ? bucket.slice(0, limit)
+            : bucket
+        ;
+    }
+
+    sortByTermAsc(a, b) {
+        return a[0] > b[0] ? 1 : -1;
+    }
+
+    sortByTermDesc(a, b) {
+        return a[0] < b[0] ? 1 : -1;
+    }
+
+    sortByValueAsc(a, b) {
+        return a[1] > b[1] ? 1 : -1;
+    }
+
+    sortByValueDesc(a, b) {
+        return a[1] < b[1] ? 1 : -1;
+    }
 }

@@ -1,4 +1,4 @@
-class FacetManager
+export default class FacetManager
 {
     constructor() {
         this.facets = Object.create(null);

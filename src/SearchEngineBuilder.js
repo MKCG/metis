@@ -1,4 +1,8 @@
-class SearchEngineBuilder
+import SearchEngine from './SearchEngine.js';
+import InvertedIndex from './InvertedIndex.js';
+import FacetManager from './FacetManager.js';
+
+export default class SearchEngineBuilder
 {
     static create(cacheSize, useWorker) {
         if (useWorker === true) {

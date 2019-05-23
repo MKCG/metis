@@ -1,4 +1,6 @@
-class InvertedIndex
+import RadixTree from './RadixTree.js';
+
+export default class InvertedIndex
 {
     constructor(cacheSize) {
         this.tokens = Object.create(null);

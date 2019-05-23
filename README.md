@@ -230,25 +230,28 @@ A new version is expected every two weeks on saturday night.
 
 | Feature                    | Expected for |  Version  |
 |----------------------------|--------------|-----------|
-| Fuzzy search               | 2018-01-20   |  0.4      |
-| Index storage              | 2018-01-27   |  0.5      |
-| Web Workers                | 2018-02-03   |  0.6      |
-| Advanced Sorting           | 2018-02-03   |  0.7      |
-| Locales based tokenization | 2018-02-17   |  0.8      |
-| Highlight                  | 2018-03-03   |  0.9      |
-| Better suggest             | 2018-03-18*  |  1.0      |
-
-
-* Don't expect me to work on St Patrick's day. Just don't.
+| Aggregation API            | May 2019     |  1.0      |
+| Index storage              | May 2019     |  1.0      |
+| Web Workers                | May 2019     |  1.0      |
+| Advanced Sorting           | May 2019     |  1.0      |
+| Locales based tokenization | Summer 2019  |  1.x      |
+| Highlight                  | Summer 2019  |  1.x      |
+| Better suggest             | Summer 2019  |  1.x      |
 
 
 ## Examples
 
-The file *examples/index.html* contains a fully functional example of a fulltext prefixed-based search bar with suggestions, facets and counters.
+The file *examples/index.html* contains a fully functional example of a fulltext prefixed-based search bar with suggestions, facets, counters and aggregations rendered as charts.
+
+
+Simply run the following command from the current folder
+```sh
+npx serve
+```
+
+Then access to **http://localhost:5000/examples/**
 
 
 ## Contributing
 
-Contributions will not be accepted before late February as I need the flexibility to make radical changes to the search engine algorithm during the first phase without impacting any other user contribution. However feel free to critizice any choice or to ask for any feature.
-
-After this first phase, any contribution will be welcomed.
+Contributions are welcomed :)

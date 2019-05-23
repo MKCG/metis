@@ -1,4 +1,4 @@
-class RadixTree
+export default class RadixTree
 {
     constructor(size, step, prefix) {
         this.size = size;

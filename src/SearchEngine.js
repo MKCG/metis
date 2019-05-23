@@ -1,4 +1,4 @@
-class SearchEngine
+export default class SearchEngine
 {
     constructor(index, facetManager) {
         this.index = index;

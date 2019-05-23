@@ -243,23 +243,23 @@ class InvertedIndex
     }
 
     listMatchingOrIds(tokens) {
-        let matched = new Set();
+        let sets = tokens.map(t => this.tokens[t])
+            .sort((a, b) => a.size > b.size ? -1 : 1)
+        ;
 
-        for (let token of tokens) {
-            if (this.tokens[token] === undefined) {
-                return [];
+        let union = new Set();
+
+        for (let set of sets) {
+            for (let element of set) {
+                union.add(element);
             }
 
-            matched = matched.size === 0
-                ? this.tokens[token].clone()
-                : matched.union(this.tokens[token]);
-
-            if (matched.size === this.trackedIds.size) {
+            if (union.size === this.trackedIds.size) {
                 break;
             }
         }
 
-        return [...matched];
+        return [...union];
     }
 
     tokenize(value) {

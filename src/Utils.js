@@ -18,7 +18,7 @@ Array.prototype.equals = function (other) {
 
 Array.prototype.intersect = function(array) {
     let values = array.filter(function(id) {
-        return this.indexOf(id) > -1;
+        return this.has(id);
     }, new Set(this));
 
     return values;

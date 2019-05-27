@@ -1,7 +1,10 @@
+import DocValue from './DocValue.js';
+
 export default class FacetManager
 {
     constructor() {
         this.facets = Object.create(null);
+        this.docValues = new DocValue();
     }
 
     add(id, doc, facets) {
@@ -22,6 +25,8 @@ export default class FacetManager
 
             this.facets[facet][value].add(id);
         }
+
+        this.docValues.addDocument(id, doc, facets);
     }
 
     remove(id) {
@@ -38,6 +43,8 @@ export default class FacetManager
                 delete this.facets[facet];
             }
         }
+
+        this.docValues.removeDocument(id);
     }
 
     getFacets() {
@@ -63,6 +70,8 @@ export default class FacetManager
             filteredDocIds = new Set(docIds),
             facetGroupDocIds = [];
 
+            docIds = new Set(docIds);
+
         /**
          * Intersect each selected facet with the global doc ids
          */
@@ -71,23 +80,62 @@ export default class FacetManager
                 continue;
             }
 
-            filteredFacets[facet] = Object.assign(Object.create(null), {});
+            let startDocValues = performance.now();
+            let valuesToIds = this.docValues.docIdsByFieldValue(facet, docIds);
+            let middleDocValues = performance.now();
 
-            let facetDocIds = new Set();
+            let toCombine = [];
 
-            for (let choice in this.facets[facet]) {
-                filteredFacets[facet][choice] = this.facets[facet][choice].intersect(docIds);
-
+            for (let choice of Object.keys(valuesToIds)) {
                 if (selectedFacets[facet].indexOf(choice) !== -1) {
-                    facetDocIds = facetDocIds.union(this.facets[facet][choice]);
+                    toCombine.push(valuesToIds[choice]);
                 }
             }
+
+            let facetDocIds = new Set();
+            for (let choiceValues of toCombine) {
+                for (let docId of choiceValues.keys()) {
+                    facetDocIds.add(docId);
+                }
+            }
+
+            filteredFacets[facet] = valuesToIds;
+            let unionDocValues = performance.now();
 
             if (facetDocIds.size > 0) {
                 filteredDocIds = filteredDocIds.intersect(facetDocIds);
             }
 
+            let endDocValues = performance.now();
+            console.log('selected facet ' + facet + ' - took ' + (middleDocValues - startDocValues) + 'ms using docValues');
+            console.log('selected facet ' + facet + ' - took ' + (unionDocValues - middleDocValues) + 'ms to make union');
+            console.log('selected facet ' + facet + ' - took ' + (endDocValues - unionDocValues) + 'ms to intersect ids');
+
             facetGroupDocIds[facet] = facetDocIds;
+            // continue;
+
+            // filteredFacets[facet] = Object.assign(Object.create(null), {});
+
+            // let start = performance.now();
+
+            // let facetDocIds = new Set();
+
+            // for (let choice in this.facets[facet]) {
+            //     filteredFacets[facet][choice] = this.facets[facet][choice].intersect(docIds);
+
+            //     if (selectedFacets[facet].indexOf(choice) !== -1) {
+            //         facetDocIds = facetDocIds.union(this.facets[facet][choice]);
+            //     }
+            // }
+
+            // if (facetDocIds.size > 0) {
+            //     filteredDocIds = filteredDocIds.intersect(facetDocIds);
+            // }
+
+            // facetGroupDocIds[facet] = facetDocIds;
+
+            // let end = performance.now();
+            // console.log('selected facet ' + facet + ' - took ' + (end - start) + 'ms');
         }
 
         /**
@@ -98,22 +146,27 @@ export default class FacetManager
                 continue;
             }
 
+            let start = performance.now();
+
             filteredFacets[facet] = Object.assign(Object.create(null), {});
 
-            for (let choice in this.facets[facet]) {
+            for (let choice of Object.keys(this.facets[facet])) {
                 let facetDocIds = this.facets[facet][choice].intersect(filteredDocIds);
 
                 if (facetDocIds.size > 0) {
                     filteredFacets[facet][choice] = facetDocIds.size;
                 }
             }
+            let end = performance.now();
+            // console.log('not selected facet ' + facet + ' - took ' + (end - start) + 'ms');
         }
-
 
         /**
          * Filter selected facets using other selected facets
          */
-        for (let facet in selectedFacets) {
+        for (let facet of Object.keys(selectedFacets)) {
+            let start = performance.now();
+
             let otherFacets = Object.keys(selectedFacets)
                 .filter(function(facet) {
                     return this !== facet;
@@ -124,13 +177,15 @@ export default class FacetManager
                 if (otherFacetIds === undefined) {
                     otherFacetIds = new Set(facetGroupDocIds[otherFacet]);
                 } else {
-                    otherFacetIds = otherFacetIds.intersect(facetGroupDocIds[otherFacet]);
+                    otherFacetIds = otherFacetIds.intersect(facetGroupDocIds[otherFacet] || new Set());
                 }
             }
 
+            let middle = performance.now();
+
             for (let choice in filteredFacets[facet]) {
                 let choiceIds = otherFacetIds !== undefined
-                    ? filteredFacets[facet][choice].intersect(otherFacetIds)
+                    ? filteredFacets[facet][choice].intersect(otherFacetIds || new Set())
                     : filteredFacets[facet][choice];
 
                 if (choiceIds.size > 0) {
@@ -139,6 +194,10 @@ export default class FacetManager
                     delete filteredFacets[facet][choice];
                 }
             }
+
+            let end = performance.now();
+            console.log('cross selected facet ' + facet + ' - took ' + Math.round(middle - start, 2) + 'ms for others intersection');
+            console.log('cross selected facet ' + facet + ' - took ' + Math.round(end - middle, 2) + 'ms for choices intersection');
         }
 
         return {

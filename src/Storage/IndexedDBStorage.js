@@ -10,7 +10,7 @@ export default class IndexedDBStorage extends Storage {
             storeName: 'documents',
             pageNamePrefix: 'page-',
             version: 1,
-            maxDocByPage: parseInt(maxDocByPage) || 100,
+            maxDocByPage: parseInt(maxDocByPage) || 1000,
             maxPageInMemory: parseInt(maxPageInMemory) || 10,
             flushInterval: parseInt(flushInterval) || 1000,
             flushRetryDelay: 2
@@ -28,8 +28,16 @@ export default class IndexedDBStorage extends Storage {
         this.isInitialized = false;
         this.delayedOperations = [];
         this.db = null;
+        this.onInitialized = function(documents) {};
+    }
+
+    connect(onInitialized) {
+        if (typeof onInitialized === 'function') {
+            this.onInitialized = onInitialized;
+        }
 
         this.getConnection();
+        return this;
     }
 
     addDocument(id, doc) {
@@ -298,6 +306,7 @@ export default class IndexedDBStorage extends Storage {
 
                         if (cursor) {
                             this.makePage(cursor.key, cursor.value);
+                            this.onInitialized(cursor.value);
                             cursor.continue();
                         } else {
                             applyPendingOperations();

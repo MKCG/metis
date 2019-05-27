@@ -1,14 +1,33 @@
 export default class SearchEngine
 {
-    constructor(index, facetManager) {
+    constructor(configuration, index, facetManager) {
         this.index = index;
         this.facetManager = facetManager;
         this.documents = [];
         this.sortedIds = [];
         this.mustSort = false;
+        this.storage = configuration.getStorage();
+        this.loaded = 0;
+
+        if (typeof this.storage.connect === 'function') {
+            this.storage.connect(function(documents) {
+                for (let id of Object.keys(documents)) {
+                    this.indexDocument(id, documents[id], null, null, false);
+                    this.loaded++;
+                }
+            }.bind(this));
+        }
     }
 
-    indexDocument(id, doc, fields, facets) {
+    indexDocument(id, doc, fields, facets, store) {
+        if (fields === null || field === undefined) {
+            fields = this.configuration.searchableFields;
+        }
+
+        if (facets === null || facets === undefined) {
+            facets = this.configuration.aggregatableFields;
+        }
+
         for (let field of fields) {
             let value = doc.getNestedValue(field);
 
@@ -18,13 +37,19 @@ export default class SearchEngine
         }
 
         this.facetManager.add(id, doc, facets);
-        this.documents[id] = doc;
+
+        if (store !== false) {
+            this.documents[id] = doc;
+            this.storage.addDocument(id, doc);
+        }
+
         this.mustSort = true;
     }
 
     removeDocument(id) {
         this.index.remove(id);
         delete this.documents[id];
+        this.storage.removeDocument(id);
 
         let pos = this.sortedIds.indexOf(id);
 

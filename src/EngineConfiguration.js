@@ -1,3 +1,6 @@
+import IndexedDBStorage from './Storage/IndexedDBStorage.js';
+import Page from './Storage/Page.js';
+
 export default class EngineConfiguration {
     constructor() {
         this.useWorker = false;
@@ -14,24 +17,30 @@ export default class EngineConfiguration {
         };
 
         this.storage = {
-            persistent: true,                  // Storage is persistent by default if possible
-            preference: [                      // Define which kind of storage engine to use by default
-                {
-                    type: 'indexedDB',
-                    config: {
-                        storeName: 'metis',
-                        maxDocByPage: 1000,
-                        flushInterval: 1000    // Delay in ms before a page flush on disk when a change happens
-                    }
-                },
-                {
-                    type: 'pool',
-                    config: {
-                        maxDoc: 10000
-                    }
-                }
-            ]
+            persistent: true,          // Storage is persistent by default if possible
+            type: 'indexedDB',
+            config: {
+                dbName: 'metis',
+                maxPageInMemory: 20,
+                maxDocByPage: 1000,
+                flushInterval: 1000    // Delay in ms before a page flush is made on disk when a change happens
+            }
         };
+    }
+
+    getStorage() {
+        if (this.storage.type === 'indexedDB') {
+            return new IndexedDBStorage(
+                this.storage.dbName,
+                this.storage.maxPageInMemory,
+                this.storage.maxDocByPage,
+                this.storage.flushInterval
+            );
+        } else if (this.storage.type === 'in-memory') {
+            return new Page();
+        }
+
+        return new Page();
     }
 
     /**
@@ -77,6 +86,10 @@ export default class EngineConfiguration {
     aggregationUseDocValues(useDocValue) {
         this.aggUseDocValue = useDocValue;
         return this;
+    }
+
+    getCacheSize() {
+        return this.cache.search.maxSize;
     }
 
     /**

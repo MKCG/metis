@@ -1,11 +1,11 @@
 export default class WorkerSearchEngineClient {
-    constructor(worker, cacheSize, cpuCores) {
+    constructor(worker, configuration, cpuCores) {
         this.worker = worker;
         this.listeners = [];
 
         this.worker.postMessage({
             type: 'init',
-            cacheSize: cacheSize
+            configuration: configuration
         });
 
 

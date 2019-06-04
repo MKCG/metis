@@ -13,6 +13,13 @@ export default class EngineConfiguration {
         this.cache = {
             search: {
                 maxSize: 50
+            },
+            agg: {
+                docValue: {
+                    maxSize: 10,
+                    minThreshold: 100,
+                    maxThreshold: 1000000
+                }
             }
         };
 
@@ -86,6 +93,18 @@ export default class EngineConfiguration {
     aggregationUseDocValues(useDocValue) {
         this.aggUseDocValue = useDocValue;
         return this;
+    }
+
+    getAggDocValuesCacheSize() {
+        return this.cache.agg.docValue.maxSize;
+    }
+
+    getAggDocValuesCacheMinThreshold() {
+        return this.cache.agg.docValue.minThreshold;
+    }
+
+    getAggDocValuesCacheMaxThreshold() {
+        return this.cache.agg.docValue.maxThreshold;
     }
 
     getCacheSize() {

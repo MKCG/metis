@@ -40,7 +40,18 @@ export default class DocValue {
         return this;
     }
 
-    docIdsByFieldValue(field, docIds) {
+    removeFieldValue(field, value) {
+        // not managed yet, can lead to a out of memory scenarii until properly managed
+        return this;
+    }
+
+    removeField(field) {
+        let mappedField = this.getIntFromFieldName(field);
+        this.mapFieldToInt.delete(mappedField);
+        return this;
+    }
+
+    fetchIdsByFieldValue(field, docIds) {
         let fieldValues = Object.assign(Object.create(null), {});
         let fieldAsInt = this.mapFieldToInt.get(field);
 
@@ -70,6 +81,38 @@ export default class DocValue {
         }
 
         return docIdsByFieldValue;
+    }
+
+    countEachFieldValue(docIds, fields) {
+        let agg = new Map();
+
+        for (let field of fields) {
+            agg.set(field, new Map());
+        }
+
+        for (let id of docIds) {
+            if (!this.documents[id]) {
+                continue;
+            }
+
+            for (let field of fields) {
+                let mappedField = this.mapFieldToInt.get(field);
+
+                if (mappedField === undefined || !this.documents[id][mappedField]) {
+                    continue;
+                }
+
+                let fieldValues = agg.get(field);
+
+                for (let value of this.documents[id][mappedField].values()) {
+                    let mappedValue = this.mapIntToValue.get(value);
+
+                    fieldValues.set(mappedValue, (fieldValues.get(mappedValue) || 0) + 1);
+                }
+            }
+        }
+
+        return agg;
     }
 
     getIntFromFieldName(field) {

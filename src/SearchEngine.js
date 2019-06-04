@@ -1,18 +1,42 @@
 export default class SearchEngine
 {
-    constructor(configuration, index, facetManager) {
+    constructor(configuration, index, aggregator) {
         this.index = index;
-        this.facetManager = facetManager;
-        this.documents = [];
+        this.aggregator = aggregator;
         this.sortedIds = [];
         this.mustSort = false;
         this.storage = configuration.getStorage();
+        this.documents = [];
         this.loaded = 0;
 
         if (typeof this.storage.connect === 'function') {
             this.storage.connect(function(documents) {
+                // return;
+                if (this.loaded > 100000) {
+                    return;
+                }
+
                 for (let id of Object.keys(documents)) {
-                    this.indexDocument(id, documents[id], null, null, false);
+                    const fields = [
+                        'content.firstname',
+                        'content.lastname',
+                        'content.jobTitle',
+                        'content.presentation',
+                        'content.resume',
+                        'content.contact.email',
+                        'content.company.name'
+                    ];
+
+                    const facets = [
+                        'content.company.jobArea',
+                        'content.company.product.name',
+                        'content.company.product.material',
+                        'content.company.product.adjective',
+                        'content.company.product.color',
+                        'content.company.product.note'
+                    ];
+
+                    this.indexDocument(id, documents[id], fields, facets, false);
                     this.loaded++;
                 }
             }.bind(this));
@@ -20,7 +44,9 @@ export default class SearchEngine
     }
 
     indexDocument(id, doc, fields, facets, store) {
-        if (fields === null || field === undefined) {
+        id = '' + id;
+
+        if (fields === null || fields === undefined) {
             fields = this.configuration.searchableFields;
         }
 
@@ -36,7 +62,7 @@ export default class SearchEngine
             }
         }
 
-        this.facetManager.add(id, doc, facets);
+        this.aggregator.addDocument(id, doc, facets);
 
         if (store !== false) {
             this.documents[id] = doc;
@@ -47,6 +73,8 @@ export default class SearchEngine
     }
 
     removeDocument(id) {
+        id = '' + id;
+
         this.index.remove(id);
         delete this.documents[id];
         this.storage.removeDocument(id);
@@ -57,7 +85,7 @@ export default class SearchEngine
             this.sortedIds.splice(pos, 1);
         }
 
-        this.facetManager.remove(id);
+        this.aggregator.removeDocument(id);
     }
 
     updateDocument(id, doc, fields, facets) {
@@ -78,13 +106,13 @@ export default class SearchEngine
         this.mustSort = false;
     }
 
-    doSearch(searchCallback, query, limit, selectedFacets, sortCallback) {
+    doSearch(searchCallback, query, limit, selectedFacets, sortCallback, fieldsSelected) {
         let searchStart = performance.now();
 
         let foundIds = searchCallback(query);
         let timerQuery = performance.now();
 
-        let facetedIds = this.facetManager.search(selectedFacets, foundIds);
+        let facetedIds = this.aggregator.selectFacets(selectedFacets, foundIds);
         let timerFacets = performance.now();
 
         let ids = [...facetedIds.ids];
@@ -106,11 +134,18 @@ export default class SearchEngine
 
         this.lastIds = ids;
 
+        let slicedIds = ids.slice(0, limit);
+        // let docs = this.storage.getDocuments(slicedIds).then(docs => docs.forEach(doc => console.log(doc)));
+        // debugger;
+
         let count = ids.length,
-            documents = ids.slice(0, limit)
-            .map(function(id) {
-                return this.documents[id];
-            }.bind(this));
+            documents = fieldsSelected === false
+                ? []
+                : ids.slice(0, limit)
+                    .map(function(id) {
+                        return this.documents[id];
+                    }.bind(this))
+            ;
 
         let searchTime = performance.now() - searchStart;
 
@@ -139,12 +174,12 @@ export default class SearchEngine
         return this.doSearch(searchCallback, query, limit, selectedFacets, sortCallback);
     }
 
-    searchByPrefix(query, limit, selectedFacets, sortCallback) {
+    searchByPrefix(query, limit, selectedFacets, sortCallback, fieldsSelected) {
         let searchCallback = function(query) {
             return this.searchByPrefix(query);
         }.bind(this.index);
 
-        return this.doSearch(searchCallback, query, limit, selectedFacets, sortCallback);
+        return this.doSearch(searchCallback, query, limit, selectedFacets, sortCallback, fieldsSelected);
     }
 
     suggest(query, limit) {
@@ -152,7 +187,10 @@ export default class SearchEngine
         return suggestions;
     }
 
-    getFacets() {
-        return this.facetManager.getFacets();
+    aggregateByField(field, query, limit, selectedFacets, sortCallback) {
+        limit = limit || 10;
+
+
+        // let results = this.searchByPrefix(query, limit, selectedFacets, sortCallback, false, [field]);
     }
 }

@@ -18,11 +18,11 @@ export default class ProperNounFeature {
             .map(tokens => tokens.map(token => token.split(' ')).map(this.extractNouns))
             .reduce((acc, curr) => acc.concat(curr), [])
             .reduce((acc, curr) => acc.concat(curr), [])
-            .filter(token => token.length > 0)
+            .filter(token => token.length > 3) // remove common words and acronyms
             .map(token => token.trim())
         ;
 
-        nouns = [...new Set(nouns)];
+        nouns = [...new Set(nouns)].sort();
         return nouns;
     }
 

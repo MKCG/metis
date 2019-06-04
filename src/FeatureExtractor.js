@@ -2,6 +2,7 @@ import AcronymFeature from './FeatureRecognition/AcronymFeature.js';
 import ColorFeature from './FeatureRecognition/ColorFeature.js';
 import DateTimeFeature from './FeatureRecognition/DateTimeFeature.js';
 import LocaleFeature from './FeatureRecognition/LocaleFeature.js';
+import PriceFeature from './FeatureRecognition/PriceFeature.js';
 import ProperNounFeature from './FeatureRecognition/ProperNounFeature.js';
 
 export default class FeatureExtractor {
@@ -13,6 +14,7 @@ export default class FeatureExtractor {
             .addFeature('color', new ColorFeature())
             .addFeature('datetime', new DateTimeFeature())
             .addFeature('locale', new LocaleFeature())
+            .addFeature('prices', new PriceFeature())
             .addFeature('properNoun', new ProperNounFeature())
         ;
     }

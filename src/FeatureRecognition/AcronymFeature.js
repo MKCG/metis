@@ -8,6 +8,7 @@ export default class AcronymFeature {
             .filter(value => value.toLocaleUpperCase() === value)
             .filter(value => value.length > 1)
             .filter(value => Number.isNaN(Number(value)))
+            .sort()
         ;
     }
 }
